@@ -28,7 +28,7 @@ CWT_jan <- CWT_jan[,1:2]
 #Set up result dataframes
 corTemp <- data.frame(matrix(NA, ncol = 4, nrow = 1))
 colnames(corTemp) <- colnames(buoy_sst_jan)
-predTemp <- data.frame(matrix(NA, ncol = 6, nrow = 16))
+predTemp <- data.frame(matrix(NA, ncol = 6, nrow = nrow(CWT_jan)))
 colnames(predTemp) <- c("year", colnames(buoy_sst_jan), "weighted_avg")
 predTemp$year <- CWT_jan$Year
 
