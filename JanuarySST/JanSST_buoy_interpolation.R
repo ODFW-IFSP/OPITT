@@ -23,7 +23,7 @@ buoy_sst_jan <- tapply(buoy_sst_m$value, list(buoy_sst_m$year, buoy_sst_m$buoyid
 #Charleston Water Temperature monthly average created by OCN forecast data download code
 CWT <- read.csv("CWT.mon.csv")
 #Match CWT timeseries to buoy data
-CWT_jan <- CWT %>% filter (Year>=2010)
+CWT_jan <- CWT %>% filter (Year>2010)
 CWT_jan <- CWT_jan[,1:2]
 #Set up result dataframes
 corTemp <- data.frame(matrix(NA, ncol = 4, nrow = 1))
