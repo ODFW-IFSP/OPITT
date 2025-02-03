@@ -8,7 +8,7 @@ library(dplyr)
 library(lubridate)
 
 #OPITT buoy dataset from Mark Sorel with mle interpolation for missing data 
-buoy_sst_d <- read.csv("interp_buoy.csv")
+buoy_sst_d <- read.csv("buoy_interp.csv")
 #The OCN CHAO3 data is a monthly average - aggregate buoy data to a monthly January average
 buoy_sst_d <- buoy_sst_d %>% 
   mutate(year = year(date))
@@ -16,9 +16,9 @@ buoy_sst_d <- buoy_sst_d %>%
   mutate(month = month(date))
 buoy_sst_d <- buoy_sst_d %>% 
   mutate(day = day(date))
-buoy_sst_d <- buoy_sst_d %>% filter(month==1)
-buoy_sst_m <- aggregate(mle~buoyid+year+month,buoy_sst_d,mean)
-buoy_sst_jan <- tapply(buoy_sst_m$mle, list(buoy_sst_m$year, buoy_sst_m$buoyid), mean)
+buoy_sst_d <- buoy_sst_d %>% filter(month==1 & type=="mle" & year>2010)
+buoy_sst_m <- aggregate(value~buoyid+year+month,buoy_sst_d,mean)
+buoy_sst_jan <- tapply(buoy_sst_m$value, list(buoy_sst_m$year, buoy_sst_m$buoyid), mean)
 
 #Charleston Water Temperature monthly average created by OCN forecast data download code
 CWT <- read.csv("CWT.mon.csv")
