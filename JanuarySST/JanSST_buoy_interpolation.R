@@ -1,8 +1,8 @@
 #Creator: Erik Suring (erik.suring@odfw.oregon.gov)
 
-#ONC Covariate Charleston Water Temperature (CHAO3) January SST is sometimes unavailable due to sensor loss
+#OCN Covariate Charleston Water Temperature (CHAO3) January SST is sometimes unavailable due to sensor loss
 #This code uses other buoy data to predict the CHAO3 January SST
-#Previous years used only buoy 46050, but sensor loss in 2025 necessitated using addtional buoys
+#Previous years used only buoy 46050, but sensor loss in 2025 necessitated using additional buoys
 
 library(dplyr)
 library(lubridate)
