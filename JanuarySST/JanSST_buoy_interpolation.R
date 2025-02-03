@@ -53,5 +53,5 @@ for(k in 1:nrow(predTemp)){
   predTemp[k,6] <- round(weighted.mean(predTemp[k,2:5], corTemp),2)  
 }
 
-predTemp[k,6]
+print(predTemp[k,6])
 plot(CWT_jan$Jan,predTemp$weighted_avg)
