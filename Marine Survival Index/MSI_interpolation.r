@@ -13,16 +13,42 @@
 # Load libraries
 require(tidyverse)
 require(MARSS)
+require(ggplot2)
+require(forecast)
 
 #Coho Salmon marine survival estimate data from the ODFW LCM project
 MSI_data<-read_csv("MSI.csv")
 #Convert ratios to logit
 MSI_data$MSAdj = log(MSI_data$MSAdj/(1-MSI_data$MSAdj))
 
-marss_dat<-MSI_data%>%
+MSI_table<-MSI_data%>%
   pivot_wider(names_from = Site,values_from = MSAdj,id_cols=BroodYear)
 
-marss_mat<-marss_dat%>%
+#Original method: average of six LCM sites
+MSI_Original <- MSI_data%>%
+  group_by(BroodYear)%>%
+  filter(between(BroodYear, 1996, 2013))%>%
+  summarise(MSAdjOG=mean(MSAdj))
+MSI_Original$MSAdjOG <- (exp(MSI_Original$MSAdjOG)/(exp(MSI_Original$MSAdjOG)+1))
+MSI_ESU <- MSI_Original
+
+#Current method: weighted average of the remaining five sites
+MSI_Current_Weight <- MSI_data%>%
+  group_by(BroodYear)%>%
+  filter(Site != "YaquinaMill")%>%
+  summarise(MSAdj=mean(MSAdj))%>%
+  mutate(Site = "PostNehalemWeight")
+
+MSI_Current <- bind_rows(MSI_Current_Weight, MSI_data)
+MSI_Current <- MSI_Current%>%
+  group_by(BroodYear)%>%
+  filter(Site != "NF Nehalem Total")%>%
+  summarise(MSAdjCurrent=mean(MSAdj))
+MSI_Current$MSAdjCurrent <- (exp(MSI_Current$MSAdjCurrent)/(exp(MSI_Current$MSAdjCurrent)+1))
+MSI_ESU <- left_join(MSI_Current, MSI_ESU)
+
+#Alternative One: use MARSS to interpolate missing values
+marss_mat<-MSI_table%>%
   dplyr::select(-c(BroodYear))%>%
   as.matrix()%>%
   t()
@@ -37,7 +63,7 @@ fit=MARSS(marss_mat, model=model,control=list(maxit=200,allow.degen=T))
 fitted<-t(fit$states)
 colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
 
-MSI_fitted<-marss_dat%>%
+MSI_fitted<-MSI_table%>%
   bind_cols(fitted)%>%
   pivot_longer(cols=c(everything(), -BroodYear),names_to = "Site")%>%
   mutate(type=ifelse(grepl("mle_",Site),"mle","obs"))%>%
@@ -46,7 +72,42 @@ MSI_fitted<-marss_dat%>%
   group_by(BroodYear,Site)%>%
   summarise(MSAdj=mean(value))
 
-#Convert logit back to ratios
-MSI_fitted$MSAdj <- (exp(MSI_fitted$MSAdj)/(exp(MSI_fitted$MSAdj)+1))
+MSI_fitted <- MSI_fitted%>%
+  group_by(BroodYear)%>%
+  summarise(MSAdjMARSS=mean(MSAdj))
+MSI_fitted$MSAdjMARSS <- (exp(MSI_fitted$MSAdjMARSS)/(exp(MSI_fitted$MSAdjMARSS)+1))
 
-write_csv(MSI_fitted, "MSI_fitted.csv")
+MSI_ESU <- left_join(MSI_ESU, MSI_fitted)
+  
+#Alternative Two: Use a weighted average of the three remaining sites
+MSI_Three_Weight <- MSI_table%>%
+  dplyr::select(-c("NF Nehalem Total", "West Fork Smith", "Winchester Creek"))%>%
+  mutate(Cascade=Cascade*(2.5/6))%>%
+  mutate(SiletzMill=SiletzMill*(2.5/6))%>%
+  mutate(YaquinaMill=YaquinaMill*(1/6))
+  #SiletzMill needs more weight in 1998 as Cascade is NA
+  MSI_Three_Weight$SiletzMill[3] <- MSI_Three_Weight$SiletzMill[3]*2
+
+MSI_Three_Weight <- MSI_Three_Weight%>%
+  mutate(MSAdjThree = rowSums(MSI_Three_Weight[ , c(2,3,4)], na.rm=TRUE))
+MSI_Three <- MSI_Three_Weight%>%
+  dplyr::select(-c("Cascade", "SiletzMill", "YaquinaMill"))
+MSI_Three$MSAdjThree <- (exp(MSI_Three$MSAdjThree)/(exp(MSI_Three$MSAdjThree)+1))
+MSI_ESU <- left_join(MSI_ESU, MSI_Three)
+
+
+
+
+ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
+  xlab("Brood Year") +
+  geom_line(color="black",linewidth=1.5) + 
+  geom_point(color="black", size = 2) +
+  geom_line(aes(y=MSAdjMARSS), col='orange', linewidth=1.5) +
+  geom_point(aes(y=MSAdjMARSS), col='orange', size = 2) +
+  geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
+  geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
+  geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
+  geom_point(aes(y=MSAdjOG), col='green', size = 2) +
+  theme_bw()
+
+
