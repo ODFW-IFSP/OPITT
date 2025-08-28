@@ -94,8 +94,9 @@ MSI_Three <- MSI_Three_Weight%>%
 MSI_Three$MSAdjThree <- (exp(MSI_Three$MSAdjThree)/(exp(MSI_Three$MSAdjThree)+1))
 MSI_ESU <- left_join(MSI_ESU, MSI_Three)
 
-ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
+print(ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
   xlab("Brood Year") +
+  ggtitle(paste("MSI Alternatives")) +
   geom_line(color="black",linewidth=1.5) + 
   geom_point(color="black", size = 2) +
   geom_line(aes(y=MSAdjMARSS), col='orange', linewidth=1.5) +
@@ -104,113 +105,76 @@ ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
   geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
   geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
   geom_point(aes(y=MSAdjOG), col='green', size = 2) +
-  theme_bw()
-
-#Run these alternatives with the last three years of MS LCM data removed
-MSI_data_m3 <- MSI_data %>%
-  filter(!((between(BroodYear, 2019, 2021)) & (Site == "West Fork Smith" | Site == "Winchester Creek")))
-
-MSI_table_m3<-MSI_data_m3%>%
-  pivot_wider(names_from = Site,values_from = MSAdj,id_cols=BroodYear)
-
-
-#Alternative One: use MARSS to interpolate missing values
-marss_mat<-MSI_table_m3%>%
-  dplyr::select(-c(BroodYear))%>%
-  as.matrix()%>%
-  t()
-
-model=list(
-  Q= "equalvarcov",#"unconstrained",
-  R= diag(rep(0,nrow(marss_mat))),#"diagonal and equal","diagonal and unequal",
-  U= matrix(rep(0,nrow(marss_mat)),nrow=nrow(marss_mat),1)
-)
-fit=MARSS(marss_mat, model=model,control=list(maxit=200,allow.degen=T))
-
-fitted<-t(fit$states)
-colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
-
-MSI_fitted<-MSI_table_m3%>%
-  bind_cols(fitted)%>%
-  pivot_longer(cols=c(everything(), -BroodYear),names_to = "Site")%>%
-  mutate(type=ifelse(grepl("mle_",Site),"mle","obs"))%>%
-  mutate(Site=gsub("mle_","",Site))%>%
-  filter(type=="mle")%>%
-  group_by(BroodYear,Site)%>%
-  summarise(MSAdj=mean(value))
-
-MSI_fitted <- MSI_fitted%>%
-  group_by(BroodYear)%>%
-  summarise(MSAdjMARSSm3=mean(MSAdj))
-MSI_fitted$MSAdjMARSSm3 <- (exp(MSI_fitted$MSAdjMARSSm3)/(exp(MSI_fitted$MSAdjMARSSm3)+1))
-
-MSI_ESU <- left_join(MSI_ESU, MSI_fitted)
-
-ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
-  xlab("Brood Year") +
-  geom_line(color="black",linewidth=1.5) + 
-  geom_point(color="black", size = 2) +
-  geom_line(aes(y=MSAdjMARSSm3), col='orange', linewidth=1.5) +
-  geom_point(aes(y=MSAdjMARSSm3), col='orange', size = 2) +
-  geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
-  geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
-  geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
-  geom_point(aes(y=MSAdjOG), col='green', size = 2) +
-  theme_bw()
+  theme_bw())
 
 
 
-#Run these alternatives with the last five years of MS LCM data removed
-MSI_data_m5 <- MSI_data %>%
-  filter(!((between(BroodYear, 2017, 2021)) & (Site == "West Fork Smith" | Site == "Winchester Creek")))
+#Progressive cross-validation
+#Run the MARSS alternative with the 1 to 8 years of MS LCM data removed
+for (i in 1:8){
+  #Remove WF Smith and Winchester from the dataset
+  MSI_data_cv <- MSI_data %>%
+    filter(!((between(BroodYear, (2022-i), 2021)) & (Site == "West Fork Smith" | Site == "Winchester Creek")))
+  
+  MSI_table_cv<-MSI_data_cv%>%
+    pivot_wider(names_from = Site,values_from = MSAdj,id_cols=BroodYear)
+  
+  #Alternative One: use MARSS to interpolate missing values
+  marss_mat<-MSI_table_cv%>%
+    dplyr::select(-c(BroodYear))%>%
+    as.matrix()%>%
+    t()
+  
+  model=list(
+    Q= "equalvarcov",#"unconstrained",
+    R= diag(rep(0,nrow(marss_mat))),#"diagonal and equal","diagonal and unequal",
+    U= matrix(rep(0,nrow(marss_mat)),nrow=nrow(marss_mat),1)
+  )
+  fit=MARSS(marss_mat, model=model,control=list(maxit=200,allow.degen=T))
+  
+  fitted<-t(fit$states)
+  colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
+  
+  MSI_fitted<-MSI_table_cv%>%
+    bind_cols(fitted)%>%
+    pivot_longer(cols=c(everything(), -BroodYear),names_to = "Site")%>%
+    mutate(type=ifelse(grepl("mle_",Site),"mle","obs"))%>%
+    mutate(Site=gsub("mle_","",Site))%>%
+    filter(type=="mle")%>%
+    group_by(BroodYear,Site)%>%
+    summarise(MSAdj=mean(value))
+  
+  MSI_fitted <- MSI_fitted%>%
+    group_by(BroodYear)%>%
+    summarise(MSAdjMARSScv=mean(MSAdj))
+  MSI_fitted$MSAdjMARSScv <- (exp(MSI_fitted$MSAdjMARSScv)/(exp(MSI_fitted$MSAdjMARSScv)+1))
+  colnames(MSI_fitted)[2] <- paste0("MSAdjMARSSm", i)
+  nrow(MSI_fitted)
+  MSI_fitted[(nrow(MSI_fitted)-(i-1)):nrow(MSI_fitted),]
+  
+  MSI_ESU <- left_join(MSI_ESU, MSI_fitted[(nrow(MSI_fitted)-(i-1)):nrow(MSI_fitted),])
+  
+  MSline <- sym(paste0("MSAdjMARSSm", i))
+  print(ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
+    xlab("Brood Year") +
+    ggtitle(paste("OCV minus", i)) +
+    geom_line(color="black",linewidth=1.5) + 
+    geom_point(color="black", size = 2) +
+    geom_line(aes(y=!!MSline), col='orange', linewidth=1.5) +
+    geom_point(aes(y=!!MSline), col='orange', size = 2) +
+    geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
+    geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
+    geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
+    geom_point(aes(y=MSAdjOG), col='green', size = 2) +
+    theme_bw())
+  
+}
 
-MSI_table_m5<-MSI_data_m5%>%
-  pivot_wider(names_from = Site,values_from = MSAdj,id_cols=BroodYear)
 
 
-#Alternative One: use MARSS to interpolate missing values
-marss_mat<-MSI_table_m5%>%
-  dplyr::select(-c(BroodYear))%>%
-  as.matrix()%>%
-  t()
 
-model=list(
-  Q= "equalvarcov",#"unconstrained",
-  R= diag(rep(0,nrow(marss_mat))),#"diagonal and equal","diagonal and unequal",
-  U= matrix(rep(0,nrow(marss_mat)),nrow=nrow(marss_mat),1)
-)
-fit=MARSS(marss_mat, model=model,control=list(maxit=200,allow.degen=T))
 
-fitted<-t(fit$states)
-colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
 
-MSI_fitted<-MSI_table_m5%>%
-  bind_cols(fitted)%>%
-  pivot_longer(cols=c(everything(), -BroodYear),names_to = "Site")%>%
-  mutate(type=ifelse(grepl("mle_",Site),"mle","obs"))%>%
-  mutate(Site=gsub("mle_","",Site))%>%
-  filter(type=="mle")%>%
-  group_by(BroodYear,Site)%>%
-  summarise(MSAdj=mean(value))
-
-MSI_fitted <- MSI_fitted%>%
-  group_by(BroodYear)%>%
-  summarise(MSAdjMARSSm5=mean(MSAdj))
-MSI_fitted$MSAdjMARSSm5 <- (exp(MSI_fitted$MSAdjMARSSm5)/(exp(MSI_fitted$MSAdjMARSSm5)+1))
-
-MSI_ESU <- left_join(MSI_ESU, MSI_fitted)
-
-ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
-  xlab("Brood Year") +
-  geom_line(color="black",linewidth=1.5) + 
-  geom_point(color="black", size = 2) +
-  geom_line(aes(y=MSAdjMARSSm5), col='orange', linewidth=1.5) +
-  geom_point(aes(y=MSAdjMARSSm5), col='orange', size = 2) +
-  geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
-  geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
-  geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
-  geom_point(aes(y=MSAdjOG), col='green', size = 2) +
-  theme_bw()
 
 mape(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjMARSSm3[24:26])
 mape(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjThree[24:26])
@@ -221,8 +185,19 @@ mae(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjThree[24:26])
 mape(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
 mape(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
 
-mae(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm3[22:26])
+mae(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
 mae(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
+
+mape(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjMARSSm7[20:26])
+mape(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjThree[20:26])
+
+mae(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjMARSSm7[20:26])
+mae(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjThree[20:26])
+
 
 
 MSI_ESU$MSAdjCurrent[24:26]
+
+
+
+
