@@ -14,6 +14,7 @@
 require(tidyverse)
 require(MARSS)
 require(Metrics)
+require(gt)
 
 #Coho Salmon marine survival estimate data from the ODFW LCM project
 MSI_data<-read_csv("MSI.csv")
@@ -21,26 +22,26 @@ MSI_data<-read_csv("MSI.csv")
 MSI_data$MSAdj = log(MSI_data$MSAdj/(1-MSI_data$MSAdj))
 
 MSI_table<-MSI_data%>%
-  pivot_wider(names_from = Site,values_from = MSAdj,id_cols=BroodYear)
+  pivot_wider(names_from = Site,values_from = MSAdj,id_cols=ReturnYear)
 
 #Original method: average of six LCM sites
 MSI_Original <- MSI_data%>%
-  group_by(BroodYear)%>%
-  filter(between(BroodYear, 1996, 2013))%>%
+  group_by(ReturnYear)%>%
+  filter(between(ReturnYear, 1999, 2017))%>%
   summarise(MSAdjOG=mean(MSAdj))
 MSI_Original$MSAdjOG <- (exp(MSI_Original$MSAdjOG)/(exp(MSI_Original$MSAdjOG)+1))
 MSI_ESU <- MSI_Original
 
 #Current method: weighted average of the remaining five sites
 MSI_Current_Weight <- MSI_data%>%
-  group_by(BroodYear)%>%
+  group_by(ReturnYear)%>%
   filter(Site != "YaquinaMill")%>%
   summarise(MSAdj=mean(MSAdj))%>%
   mutate(Site = "PostNehalemWeight")
 
 MSI_Current <- bind_rows(MSI_Current_Weight, MSI_data)
 MSI_Current <- MSI_Current%>%
-  group_by(BroodYear)%>%
+  group_by(ReturnYear)%>%
   filter(Site != "NF Nehalem Total")%>%
   summarise(MSAdjCurrent=mean(MSAdj))
 MSI_Current$MSAdjCurrent <- (exp(MSI_Current$MSAdjCurrent)/(exp(MSI_Current$MSAdjCurrent)+1))
@@ -48,7 +49,7 @@ MSI_ESU <- left_join(MSI_Current, MSI_ESU)
 
 #Alternative One: use MARSS to interpolate missing values
 marss_mat<-MSI_table%>%
-  dplyr::select(-c(BroodYear))%>%
+  dplyr::select(-c(ReturnYear))%>%
   as.matrix()%>%
   t()
 
@@ -64,15 +65,15 @@ colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
 
 MSI_fitted<-MSI_table%>%
   bind_cols(fitted)%>%
-  pivot_longer(cols=c(everything(), -BroodYear),names_to = "Site")%>%
+  pivot_longer(cols=c(everything(), -ReturnYear),names_to = "Site")%>%
   mutate(type=ifelse(grepl("mle_",Site),"mle","obs"))%>%
   mutate(Site=gsub("mle_","",Site))%>%
   filter(type=="mle")%>%
-  group_by(BroodYear,Site)%>%
+  group_by(ReturnYear,Site)%>%
   summarise(MSAdj=mean(value))
 
 MSI_fitted <- MSI_fitted%>%
-  group_by(BroodYear)%>%
+  group_by(ReturnYear)%>%
   summarise(MSAdjMARSS=mean(MSAdj))
 MSI_fitted$MSAdjMARSS <- (exp(MSI_fitted$MSAdjMARSS)/(exp(MSI_fitted$MSAdjMARSS)+1))
 
@@ -94,8 +95,8 @@ MSI_Three <- MSI_Three_Weight%>%
 MSI_Three$MSAdjThree <- (exp(MSI_Three$MSAdjThree)/(exp(MSI_Three$MSAdjThree)+1))
 MSI_ESU <- left_join(MSI_ESU, MSI_Three)
 
-print(ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
-  xlab("Brood Year") +
+print(ggplot(data=MSI_ESU, aes(x=ReturnYear, y=MSAdjCurrent)) +
+  xlab("Return Year") +
   ggtitle(paste("MSI Alternatives")) +
   geom_line(color="black",linewidth=1.5) + 
   geom_point(color="black", size = 2) +
@@ -114,14 +115,14 @@ print(ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
 for (i in 1:8){
   #Remove WF Smith and Winchester from the dataset
   MSI_data_cv <- MSI_data %>%
-    filter(!((between(BroodYear, (2022-i), 2021)) & (Site == "West Fork Smith" | Site == "Winchester Creek")))
+    filter(!((between(ReturnYear, (2025-i), 2024)) & (Site == "West Fork Smith" | Site == "Winchester Creek")))
   
   MSI_table_cv<-MSI_data_cv%>%
-    pivot_wider(names_from = Site,values_from = MSAdj,id_cols=BroodYear)
+    pivot_wider(names_from = Site,values_from = MSAdj,id_cols=ReturnYear)
   
   #Alternative One: use MARSS to interpolate missing values
   marss_mat<-MSI_table_cv%>%
-    dplyr::select(-c(BroodYear))%>%
+    dplyr::select(-c(ReturnYear))%>%
     as.matrix()%>%
     t()
   
@@ -137,15 +138,15 @@ for (i in 1:8){
   
   MSI_fitted<-MSI_table_cv%>%
     bind_cols(fitted)%>%
-    pivot_longer(cols=c(everything(), -BroodYear),names_to = "Site")%>%
+    pivot_longer(cols=c(everything(), -ReturnYear),names_to = "Site")%>%
     mutate(type=ifelse(grepl("mle_",Site),"mle","obs"))%>%
     mutate(Site=gsub("mle_","",Site))%>%
     filter(type=="mle")%>%
-    group_by(BroodYear,Site)%>%
+    group_by(ReturnYear,Site)%>%
     summarise(MSAdj=mean(value))
   
   MSI_fitted <- MSI_fitted%>%
-    group_by(BroodYear)%>%
+    group_by(ReturnYear)%>%
     summarise(MSAdjMARSScv=mean(MSAdj))
   MSI_fitted$MSAdjMARSScv <- (exp(MSI_fitted$MSAdjMARSScv)/(exp(MSI_fitted$MSAdjMARSScv)+1))
   colnames(MSI_fitted)[2] <- paste0("MSAdjMARSSm", i)
@@ -155,8 +156,8 @@ for (i in 1:8){
   MSI_ESU <- left_join(MSI_ESU, MSI_fitted[(nrow(MSI_fitted)-(i-1)):nrow(MSI_fitted),])
   
   MSline <- sym(paste0("MSAdjMARSSm", i))
-  print(ggplot(data=MSI_ESU, aes(x=BroodYear, y=MSAdjCurrent)) +
-    xlab("Brood Year") +
+  print(ggplot(data=MSI_ESU, aes(x=ReturnYear, y=MSAdjCurrent)) +
+    xlab("Return Year") +
     ggtitle(paste("OCV minus", i)) +
     geom_line(color="black",linewidth=1.5) + 
     geom_point(color="black", size = 2) +
@@ -171,33 +172,56 @@ for (i in 1:8){
 }
 
 
+#Create evaluation table
+MSI_eval_columns <- c("Years_removed", "MARSS_MAE", "Three_site_MAE", "MARSS_MAPE", "Three_site_MAPE")
+MSI_eval <- data.frame(matrix(nrow = 0, ncol = length(MSI_eval_columns)))
+for (i in 1:8){
+  startrow <- nrow(MSI_ESU)+1-i
+  endrow <- nrow(MSI_ESU)
+  MARSScol <- 5+i
+  MSI_eval <- rbind(MSI_eval, c(i, mae(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), mae(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow]), mape(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), mape(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow])))
+}
+colnames(MSI_eval) <- MSI_eval_columns
 
 
+print(ggplot(data=MSI_eval, aes(x=Years_removed, y=MARSS_MAE)) +
+        xlab("Years Removed") +
+        ggtitle("MAE") +
+        geom_line(color="black",linewidth=1.5) + 
+        geom_point(color="black", size = 2) +
+        geom_line(aes(y=Three_site_MAE), col='orange', linewidth=1.5) +
+        geom_point(aes(y=Three_site_MAE), col='orange', size = 2) +
+        theme_bw())
 
+print(ggplot(data=MSI_eval, aes(x=Years_removed, y=MARSS_MAPE)) +
+        xlab("Years Removed") +
+        ggtitle("MAPE") +
+        geom_line(color="black",linewidth=1.5) + 
+        geom_point(color="black", size = 2) +
+        geom_line(aes(y=Three_site_MAPE), col='orange', linewidth=1.5) +
+        geom_point(aes(y=Three_site_MAPE), col='orange', size = 2) +
+        theme_bw())
 
-
-mape(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjMARSSm3[24:26])
-mape(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjThree[24:26])
-
-mae(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjMARSSm3[24:26])
-mae(MSI_ESU$MSAdjCurrent[24:26], MSI_ESU$MSAdjThree[24:26])
-
-mape(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
-mape(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
-
-mae(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
-mae(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
-
-mape(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjMARSSm7[20:26])
-mape(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjThree[20:26])
-
-mae(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjMARSSm7[20:26])
-mae(MSI_ESU$MSAdjCurrent[20:26], MSI_ESU$MSAdjThree[20:26])
-
-
-
-MSI_ESU$MSAdjCurrent[24:26]
-
-
-
-
+#Print the evaluation table
+MSI_eval_table <- gt(MSI_eval) %>%
+  tab_header(
+    title = "MSI alternative evaluation",
+  ) %>%
+  fmt_number(
+    columns = c(MARSS_MAE, Three_site_MAE, MARSS_MAPE, Three_site_MAPE),
+    decimals = 3
+  ) %>%
+  cols_label(
+    Years_removed = "Years Removed",
+    MARSS_MAE = "MAE MARSS",
+    Three_site_MAE = "MAE Three Sites",
+    MARSS_MAPE = "MAPE MARSS",
+    Three_site_MAPE = "MAPE Three Sites"
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  )
+print(MSI_eval_table)
