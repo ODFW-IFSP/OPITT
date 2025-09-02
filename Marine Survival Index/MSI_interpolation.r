@@ -175,7 +175,7 @@ for (i in 1:8){
 #Create evaluation table
 MSI_eval_columns <- c("Years_removed", "MARSS_MAE", "Three_site_MAE", "MARSS_MAPE", "Three_site_MAPE")
 MSI_eval <- data.frame(matrix(nrow = 0, ncol = length(MSI_eval_columns)))
-for (i in 1:8){
+for (i in 3:8){
   startrow <- nrow(MSI_ESU)+1-i
   endrow <- nrow(MSI_ESU)
   MARSScol <- 5+i
@@ -225,3 +225,26 @@ MSI_eval_table <- gt(MSI_eval) %>%
     locations = cells_column_labels(everything())
   )
 print(MSI_eval_table)
+
+
+MSI_graph <- MSI_ESU
+MSI_graph$MSAdjThree[1:23] <- NA
+print(ggplot(data=MSI_graph, aes(x=ReturnYear, y=MSAdjCurrent)) +
+        xlab("Return Year") +
+        ggtitle(paste("MSI Alternatives")) +
+        geom_line(color="black",linewidth=1.5) + 
+        geom_point(color="black", size = 2) +
+        geom_line(aes(y=MSAdjMARSSm3), col='orange', linewidth=1.5) +
+        geom_point(aes(y=MSAdjMARSSm3), col='orange', size = 2) +
+        geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
+        geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
+        geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
+        geom_point(aes(y=MSAdjOG), col='green', size = 2) +
+        theme_bw())
+
+cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjThree[1:19])
+cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjMARSS[1:19])
+cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjThree)
+cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjMARSS)
+
+write_csv(MSI_ESU, "MSI_results.csv")
