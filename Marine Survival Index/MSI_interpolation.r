@@ -53,12 +53,8 @@ marss_mat<-MSI_table%>%
   as.matrix()%>%
   t()
 
-model=list(
-  Q= "equalvarcov",#"unconstrained",
-  R= diag(rep(0,nrow(marss_mat))),#"diagonal and equal","diagonal and unequal",
-  U= matrix(rep(0,nrow(marss_mat)),nrow=nrow(marss_mat),1)
-)
-fit=MARSS(marss_mat, model=model,control=list(maxit=200,allow.degen=T))
+model=list(Q= "equalvarcov")
+fit=MARSS(marss_mat, model=model)
 
 fitted<-t(fit$states)
 colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
@@ -112,7 +108,7 @@ print(ggplot(data=MSI_ESU, aes(x=ReturnYear, y=MSAdjCurrent)) +
 
 #Progressive cross-validation
 #Run the MARSS alternative with the 1 to 8 years of MS LCM data removed
-for (i in 1:8){
+for (i in 3:8){
   #Remove WF Smith and Winchester from the dataset
   MSI_data_cv <- MSI_data %>%
     filter(!((between(ReturnYear, (2025-i), 2024)) & (Site == "West Fork Smith" | Site == "Winchester Creek")))
@@ -126,12 +122,8 @@ for (i in 1:8){
     as.matrix()%>%
     t()
   
-  model=list(
-    Q= "equalvarcov",#"unconstrained",
-    R= diag(rep(0,nrow(marss_mat))),#"diagonal and equal","diagonal and unequal",
-    U= matrix(rep(0,nrow(marss_mat)),nrow=nrow(marss_mat),1)
-  )
-  fit=MARSS(marss_mat, model=model,control=list(maxit=200,allow.degen=T))
+  model=list(Q= "equalvarcov")
+  fit=MARSS(marss_mat, model=model)
   
   fitted<-t(fit$states)
   colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
@@ -178,7 +170,7 @@ MSI_eval <- data.frame(matrix(nrow = 0, ncol = length(MSI_eval_columns)))
 for (i in 3:8){
   startrow <- nrow(MSI_ESU)+1-i
   endrow <- nrow(MSI_ESU)
-  MARSScol <- 5+i
+  MARSScol <- 3+i
   MSI_eval <- rbind(MSI_eval, c(i, mae(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), mae(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow]), mape(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), mape(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow])))
 }
 colnames(MSI_eval) <- MSI_eval_columns
