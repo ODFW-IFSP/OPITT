@@ -15,6 +15,8 @@ require(tidyverse)
 require(MARSS)
 require(Metrics)
 require(gt)
+require(corrplot)
+require(ggcorrplot)
 
 #Coho Salmon marine survival estimate data from the ODFW LCM project
 MSI_data<-read_csv("MSI.csv")
@@ -23,6 +25,19 @@ MSI_data$MSAdj = log(MSI_data$MSAdj/(1-MSI_data$MSAdj))
 
 MSI_table<-MSI_data%>%
   pivot_wider(names_from = Site,values_from = MSAdj,id_cols=ReturnYear)
+
+#Evaluate site correlation
+MSI_cor_table <- MSI_table%>%
+  dplyr::select(-c(ReturnYear))%>%
+  as.matrix()
+
+MSI_cor <- cor(MSI_cor_table, use = "pairwise.complete.obs")
+cor_order <- c("NF Nehalem Total", "SiletzMill", "YaquinaMill", "Cascade", "West Fork Smith", "Winchester Creek")
+MSI_cor <- MSI_cor[cor_order, cor_order]
+
+heatmap(MSI_cor, symm = TRUE)
+ggcorrplot(MSI_cor, lab = TRUE)
+corrplot(MSI_cor, method = "circle")
 
 #Original method: average of six LCM sites
 MSI_Original <- MSI_data%>%
@@ -171,7 +186,11 @@ for (i in 3:8){
   startrow <- nrow(MSI_ESU)+1-i
   endrow <- nrow(MSI_ESU)
   MARSScol <- 3+i
-  MSI_eval <- rbind(MSI_eval, c(i, mae(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), mae(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow]), mape(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), mape(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow])))
+  MSI_eval <- rbind(MSI_eval,c(i, 
+                    mae(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), 
+                    mae(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow]), 
+                    mape(MSI_ESU$MSAdjCurrent[startrow:endrow], pull(MSI_ESU[startrow:endrow,MARSScol])), 
+                    mape(MSI_ESU$MSAdjCurrent[startrow:endrow], MSI_ESU$MSAdjThree[startrow:endrow])))
 }
 colnames(MSI_eval) <- MSI_eval_columns
 
@@ -220,14 +239,14 @@ print(MSI_eval_table)
 
 
 MSI_graph <- MSI_ESU
-MSI_graph$MSAdjThree[1:23] <- NA
+MSI_graph$MSAdjThree[1:21] <- NA
 print(ggplot(data=MSI_graph, aes(x=ReturnYear, y=MSAdjCurrent)) +
         xlab("Return Year") +
         ggtitle(paste("MSI Alternatives")) +
         geom_line(color="black",linewidth=1.5) + 
         geom_point(color="black", size = 2) +
-        geom_line(aes(y=MSAdjMARSSm3), col='orange', linewidth=1.5) +
-        geom_point(aes(y=MSAdjMARSSm3), col='orange', size = 2) +
+        geom_line(aes(y=MSAdjMARSSm5), col='orange', linewidth=1.5) +
+        geom_point(aes(y=MSAdjMARSSm5), col='orange', size = 2) +
         geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
         geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
         geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
@@ -238,5 +257,8 @@ cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjThree[1:19])
 cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjMARSS[1:19])
 cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjThree)
 cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjMARSS)
+
+cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
+cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
 
 write_csv(MSI_ESU, "MSI_results.csv")
