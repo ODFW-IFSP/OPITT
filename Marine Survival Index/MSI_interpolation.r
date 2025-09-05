@@ -40,7 +40,6 @@ colnames(MSI_cor) <- cor_lables
 
 
 #corrplot(MSI_cor, method = "circle")
-heatmap(MSI_cor, symm = TRUE)
 MSI_cor_plot <- ggcorrplot(MSI_cor,
                            lab = TRUE,
                            lab_size = 3.5) +
@@ -253,13 +252,17 @@ MSI_eval_table <- gt(MSI_eval) %>%
       cell_text(align = "center")
     ),
     locations = cells_body()
+  ) %>%
+  tab_options(
+    table.font.size = "12px"
   )
+
 print(MSI_eval_table)
 gtsave(data = MSI_eval_table,
   filename = "MSI_eval_table.png",
   expand = 5,  # Optional: adds padding around the table
   vwidth = 7 * 96,  # Convert inches to pixels (assuming 96 DPI)
-  vheight = 5 * 96
+  vheight = 4 * 96
 )
 
 
@@ -295,10 +298,10 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
   theme_bw() +
   theme(legend.position = c(0.05, 0.95),
         legend.justification = c(0, 1),
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        axis.title.x = element_text(size = 14),
-        axis.title.y = element_text(size = 14)
+        axis.text.x = element_text(size = 11),
+        axis.text.y = element_text(size = 11),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12)
   )
 print(MSI_alt_plot)       
 ggsave("MSI_plot.png", plot = MSI_alt_plot, width = 7, height = 5, units = "in", dpi = 300)
