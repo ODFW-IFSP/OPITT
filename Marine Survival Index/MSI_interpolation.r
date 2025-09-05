@@ -133,7 +133,7 @@ print(ggplot(data=MSI_ESU, aes(x=ReturnYear, y=MSAdjCurrent)) +
 
 
 #Progressive cross-validation
-#Run the MARSS alternative with the 1 to 8 years of MS LCM data removed
+#Run the MARSS alternative with 3 to 8 years of MS LCM data removed
 for (i in 3:8){
   #Remove WF Smith and Winchester from the dataset
   MSI_data_cv <- MSI_data %>%
@@ -267,7 +267,7 @@ gtsave(data = MSI_eval_table,
 
 
 
-#Print graph
+#Print graph of MSIs used in Forecast Evaluations
 MSI_graph <- MSI_ESU
 MSI_graph$MSAdjThree[1:21] <- NA
 MSI_graph_long <- MSI_graph %>%
@@ -311,13 +311,22 @@ ggsave("MSI_plot.png", plot = MSI_alt_plot +
          coord_cartesian(clip = "off"),
        width = 7, height = 4, units = "in", dpi = 300)
 
-
+#Other comparisons of the MSI alternatives
 cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjThree[1:19])
 cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjMARSS[1:19])
 cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjThree)
 cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjMARSS)
-
 cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
 cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
 
 #write_csv(MSI_graph, "MSI_graph.csv")
+
+#Create the MSI inputs to be used in the marine survival forecast
+MSI_results <- MSI_ESU %>%
+  select(ReturnYear, MSAdjCurrent, MSAdjOG, MSAdjMARSSm5, MSAdjThree)
+#Use the current MSI up to 2019
+  MSI_results$MSAdjOG[1:21] <- MSI_results$MSAdjCurrent[1:21]
+  colnames(MSI_results)[3] <- "MSAdjFixed"
+  MSI_results$MSAdjThree[1:21] <- MSI_results$MSAdjCurrent[1:21]
+  MSI_results$MSAdjMARSSm5[1:21] <- MSI_results$MSAdjCurrent[1:21]
+
