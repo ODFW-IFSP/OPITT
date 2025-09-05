@@ -275,7 +275,7 @@ MSI_graph_long <- pivot_longer(MSI_graph_long,
                               values_to = "Value")
 MSI_graph_long$Metric <- factor(MSI_graph_long$Metric,
                                 levels = c("MSAdjOG", "MSAdjCurrent", "MSAdjThree", "MSAdjMARSSm5"),
-                                labels = c("Original MSI", "Current MSI", "Three-Year Avg", "MARSS Model (m5)"))
+                                labels = c("Original MSI", "Current MSI", "Three site MSI", "MARSS model MSI"))
 
 MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, color = Metric)) +
   geom_line(linewidth = 1.5) +
@@ -285,13 +285,13 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
     values = c(
       "Original MSI" = "green",
       "Current MSI" = "black",
-      "Three-Year Avg" = "blue",
-      "MARSS Model (m5)" = "orange"
+      "Three site MSI" = "blue",
+      "MARSS model MSI" = "orange"
     )
   ) +
   xlab("Return Year") +
   ylab("Adjusted Marine Survival") +
-  ggtitle("MSI Alternatives") +
+  #ggtitle("MSI Alternatives") +
   theme_bw() +
   theme(legend.position = c(0.05, 0.95),
         legend.justification = c(0, 1),
@@ -302,6 +302,11 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
   )
 print(MSI_alt_plot)       
 ggsave("MSI_plot.png", plot = MSI_alt_plot, width = 7, height = 5, units = "in", dpi = 300)
+
+ggsave("MSI_plot.png", plot = MSI_alt_plot +
+         theme(plot.margin = margin(10, 30, 10, 10)) +
+         coord_cartesian(clip = "off"),
+       width = 7, height = 4, units = "in", dpi = 300)
 
 
 cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjThree[1:19])
