@@ -15,8 +15,8 @@ require(tidyverse)
 require(MARSS)
 require(Metrics)
 require(gt)
-require(corrplot)
 require(ggcorrplot)
+#require(corrplot)
 
 #Coho Salmon marine survival estimate data from the ODFW LCM project
 MSI_data<-read_csv("MSI.csv")
@@ -34,10 +34,22 @@ MSI_cor_table <- MSI_table%>%
 MSI_cor <- cor(MSI_cor_table, use = "pairwise.complete.obs")
 cor_order <- c("NF Nehalem Total", "SiletzMill", "YaquinaMill", "Cascade", "West Fork Smith", "Winchester Creek")
 MSI_cor <- MSI_cor[cor_order, cor_order]
+cor_lables <- c("NF Nehalem", "Mill Cr (Siletz)", "Mill Cr (Yaquina)", "Cascade Cr", "WF Smith", "Winchester Cr")
+rownames(MSI_cor) <- cor_lables
+colnames(MSI_cor) <- cor_lables
 
+
+#corrplot(MSI_cor, method = "circle")
 heatmap(MSI_cor, symm = TRUE)
-ggcorrplot(MSI_cor, lab = TRUE)
-corrplot(MSI_cor, method = "circle")
+MSI_cor_plot <- ggcorrplot(MSI_cor,
+                           lab = TRUE,
+                           lab_size = 3.5) +
+            theme(axis.text.x = element_text(size = 10, angle = 25, hjust = 1),
+            axis.text.y = element_text(size = 10))
+
+print(MSI_cor_plot)
+ggsave("MSI_cor_plot.png", plot = MSI_cor_plot, width = 7, height = 5, units = "in", dpi = 300)
+
 
 #Original method: average of six LCM sites
 MSI_Original <- MSI_data%>%
@@ -216,7 +228,7 @@ print(ggplot(data=MSI_eval, aes(x=Years_removed, y=MARSS_MAPE)) +
 #Print the evaluation table
 MSI_eval_table <- gt(MSI_eval) %>%
   tab_header(
-    title = "MSI alternative evaluation",
+    title = "Marine survival index alternative evaluation",
   ) %>%
   fmt_number(
     columns = c(MARSS_MAE, Three_site_MAE, MARSS_MAPE, Three_site_MAPE),
@@ -231,27 +243,66 @@ MSI_eval_table <- gt(MSI_eval) %>%
   ) %>%
   tab_style(
     style = list(
-      cell_text(weight = "bold")
+      cell_text(weight = "bold"),
+      cell_text(align = "center")
     ),
     locations = cells_column_labels(everything())
+  )%>%
+  tab_style(
+    style = list(
+      cell_text(align = "center")
+    ),
+    locations = cells_body()
   )
 print(MSI_eval_table)
+gtsave(data = MSI_eval_table,
+  filename = "MSI_eval_table.png",
+  expand = 5,  # Optional: adds padding around the table
+  vwidth = 7 * 96,  # Convert inches to pixels (assuming 96 DPI)
+  vheight = 5 * 96
+)
 
 
+
+#Print graph
 MSI_graph <- MSI_ESU
 MSI_graph$MSAdjThree[1:21] <- NA
-print(ggplot(data=MSI_graph, aes(x=ReturnYear, y=MSAdjCurrent)) +
-        xlab("Return Year") +
-        ggtitle(paste("MSI Alternatives")) +
-        geom_line(color="black",linewidth=1.5) + 
-        geom_point(color="black", size = 2) +
-        geom_line(aes(y=MSAdjMARSSm5), col='orange', linewidth=1.5) +
-        geom_point(aes(y=MSAdjMARSSm5), col='orange', size = 2) +
-        geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
-        geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
-        geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
-        geom_point(aes(y=MSAdjOG), col='green', size = 2) +
-        theme_bw())
+MSI_graph_long <- MSI_graph %>%
+  select(ReturnYear, MSAdjCurrent, MSAdjMARSSm5, MSAdjThree, MSAdjOG)
+MSI_graph_long <- pivot_longer(MSI_graph_long,
+                              cols = c(MSAdjCurrent, MSAdjMARSSm5, MSAdjThree, MSAdjOG),
+                              names_to = "Metric",
+                              values_to = "Value")
+MSI_graph_long$Metric <- factor(MSI_graph_long$Metric,
+                                levels = c("MSAdjOG", "MSAdjCurrent", "MSAdjThree", "MSAdjMARSSm5"),
+                                labels = c("Original MSI", "Current MSI", "Three-Year Avg", "MARSS Model (m5)"))
+
+MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, color = Metric)) +
+  geom_line(linewidth = 1.5) +
+  geom_point(size = 2) +
+  scale_color_manual(
+    name = NULL,
+    values = c(
+      "Original MSI" = "green",
+      "Current MSI" = "black",
+      "Three-Year Avg" = "blue",
+      "MARSS Model (m5)" = "orange"
+    )
+  ) +
+  xlab("Return Year") +
+  ylab("Adjusted Marine Survival") +
+  ggtitle("MSI Alternatives") +
+  theme_bw() +
+  theme(legend.position = c(0.05, 0.95),
+        legend.justification = c(0, 1),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14)
+  )
+print(MSI_alt_plot)       
+ggsave("MSI_plot.png", plot = MSI_alt_plot, width = 7, height = 5, units = "in", dpi = 300)
+
 
 cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjThree[1:19])
 cor(MSI_ESU$MSAdjOG[1:19], MSI_ESU$MSAdjMARSS[1:19])
@@ -261,4 +312,4 @@ cor(MSI_ESU$MSAdjCurrent, MSI_ESU$MSAdjMARSS)
 cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjThree[22:26])
 cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
 
-write_csv(MSI_ESU, "MSI_results.csv")
+#write_csv(MSI_graph, "MSI_graph.csv")
