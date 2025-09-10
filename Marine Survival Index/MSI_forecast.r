@@ -3,12 +3,11 @@ library(mgcv)
 
 #Number of Years over which to calculate running mean
 nKnots = 3
-loopFlag = FALSE #if TRUE, loop through all possible combinations of three variables
+#loopFlag = FALSE #if TRUE, loop through all possible combinations of three variables
 allplots = FALSE
-spawnFlag = TRUE
-
-
-
+dataFlag = "OCN_Rivers"
+jackFlag = FALSE #currently only use for OPIH
+#spawnFlag = TRUE
 
 
   fishfile = "OCNForecastData.csv"
@@ -92,7 +91,7 @@ forecastYr = modelData[nYears,1]
         #dev.new()
         #win.metafile(file="xxplot.emf",width=6,height=6)
         #win.graph(width = 5, height = 8)
-        pdf(file='FittedGAMS.pdf', width = 5, height = 8)
+        #pdf(file='FittedGAMS.pdf', width = 5, height = 8)
         par(mfrow = c(2, 1))
         par(oma=c(0,0,1,1)) 
         par(mar=c(4.5,4,0,0))
@@ -125,10 +124,10 @@ forecastYr = modelData[nYears,1]
       legtemp = paste(Var.allnames[i],"+",Var.allnames[j], sep="")    
     }
      
-    source(here::here"functions/TheGAM_2Var.R")
+    source(here::here("functions/TheGAM_2Var.R"))
     ensembleAve[,3] = ensembleAve[,3]+ypred
     TheResiduals[,iPlot] = yres 
-    source(here::here"functions/OCV_GAM_2Var.R")
+    source(here::here("functions/OCV_GAM_2Var.R"))
     ensembleAve[,4] = ensembleAve[,4]+y_fc
         
     #Add model predictions to array of all model predictions.  These are the GAM fits, NOT the forecasts
@@ -162,7 +161,7 @@ forecastYr = modelData[nYears,1]
   if (!allplots) {
     thelty = rep(1,(length(Var1)+1))
     if (length(Var1)>=8) thelty[9:(length(Var1)+1)] = 2
-    if (jackFlag)  thelty[2] = 2
+    #if (jackFlag)  thelty[2] = 2
     thelwd = rep(1,(length(Var1)+1))
     thelwd[1] = 2
     legend(xPos, yPos, leg.txt, col = theColors,cex=0.65, lty=thelty, lwd=thelwd)
@@ -183,7 +182,7 @@ forecastYr = modelData[nYears,1]
   }
   #stop("m")
 
-    #source(here::here"functions/Forecast_Skill_2Var.R")
+    source(here::here("functions/Forecast_Skill_2Var.R"))
     #Calculate HFS of ensemble averages
     meany = mean(ensembleAveFC[1:(length(ensembleAveFC[,1])-1),2])
     ss1 = sum((ensembleAveFC[1:(length(ensembleAveFC[,1])-1),2] - meany)^2)
@@ -206,22 +205,23 @@ forecastYr = modelData[nYears,1]
     print(theText)
     print(meanFC)
 
-    source(here::here"functions/Conf_Intervals_2Var.R")  
+    source(here::here("functions/Conf_Intervals_2Var.R"))
 
 fullStats = theStats
 theStats = cbind(fullStats[,1:3],(exp(fullStats[,9])/(exp(fullStats[,9])+1)),fullStats[,6],fullStats[,7])
 colnames(theStats) = c("Var1", "Var2", "Var3", "Forecast", "R2", "OCV")
 
-cat("Forecast year:",forecastYr, "\n", file = "ForecastStatsByModel.csv", sep = ",", fill = FALSE, labels = NULL, append = FALSE)
-cat("Fish data file:",fishfile, "\n", file = "ForecastStatsByModel.csv", sep = ",", fill = FALSE, labels = NULL, append = TRUE)
-cat("Predictor data file:",fishfile, "\n", file = "ForecastStatsByModel.csv", sep = ",", fill = FALSE, labels = NULL, append = TRUE)
-write.table(theStats, file="ForecastStatsByModel.csv", row.names = FALSE, sep=",", append = TRUE)
-cat("Ensemble Mean"," ", " ", meanFC, "\n", file = "ForecastStatsByModel.csv", sep = ",", fill = FALSE, labels = NULL, append = TRUE)
-cat("Lower 90% P.I.", " ", " ", exp(ensembleAveFC[nSteps,4]), "\n", file = "ForecastStatsByModel.csv", sep = ",", fill = FALSE, labels = NULL, append = TRUE)
-cat("Upper 90% P.I.", " ", " ", exp(ensembleAveFC[nSteps,5]), "\n", file = "ForecastStatsByModel.csv", sep = ",", fill = FALSE, labels = NULL, append = TRUE)
+forecastsFilename <- here::here("results/ForecastStatsByModel.csv")
+cat("Forecast year:",forecastYr, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = FALSE)
+cat("Fish data file:",fishfile, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
+cat("Predictor data file:",fishfile, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
+write.table(theStats, file= forecastsFilename, row.names = FALSE, sep=",", append = TRUE)
+cat("Ensemble Mean"," ", " ", meanFC, R2_cal, OCV_cal, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
+cat("Lower 90% P.I.", " ", " ", exp(ensembleAveFC[nSteps,4]), "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
+cat("Upper 90% P.I.", " ", " ", exp(ensembleAveFC[nSteps,5]), "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
 
-write.table(fullStats, file="bestmodelsStats.txt",row.names = FALSE)
-write.table(allPredictions, file="Predictions.txt",row.names = FALSE)
+#write.table(fullStats, file="bestmodelsStats.txt",row.names = FALSE)
+#write.table(allPredictions, file="Predictions.txt",row.names = FALSE)
 
 colnames(AllPredictors2) = var.names2
 dev.off()
