@@ -330,3 +330,4 @@ MSI_results <- MSI_ESU %>%
   MSI_results$MSAdjThree[1:21] <- MSI_results$MSAdjCurrent[1:21]
   MSI_results$MSAdjMARSSm5[1:21] <- MSI_results$MSAdjCurrent[1:21]
 
+write_csv(MSI_results, "MSI_results.csv")  
