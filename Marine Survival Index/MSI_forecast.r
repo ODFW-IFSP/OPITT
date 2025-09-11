@@ -1,3 +1,17 @@
+#Creator: Erik Suring (erik.suring@odfw.oregon.gov)
+#Forked from the OCN abundance forcast (Rupp et al. 2012, doi:10.1111/j.1365-2419.2011.00605.x)
+#
+#
+#Six ODFW Life Cycle Monitoring sites formed the basis of a Marine Survival Index
+#used to forecast Coho Salmon marine survival as part of PFMC Amendment 13
+#fisheries management. In 2017 monitoring was cut at the NF Nehalem site. In 2025
+#monitoring was cut at the WF Smith and Winchester sites. This code forecasts marine
+#marine survival fit to alternative Marine Survival Index values from MSI_interpolation.r.
+#
+#MSI alternatives (y-values) need to be changed in three places: line 81-85 in this
+#file, line 19 in Forecast_Skill_2Var.R, and line 27 in Conf_Intervals_2Var.R
+#
+
 require(stats); require(graphics)
 library(mgcv)
 
@@ -23,6 +37,9 @@ InData = OCNData
 #Convert ratios to logit
 InData[,2] = log(InData[,2]/(1-InData[,2]))
 InData[,3] = log(InData[,3]/(1-InData[,3]))
+InData[,15] = log(InData[,15]/(1-InData[,15]))
+InData[,16] = log(InData[,16]/(1-InData[,16]))
+InData[,17] = log(InData[,17]/(1-InData[,17]))
 #Covert abundances to log
 InData[,4] = log(InData[,4])
 InData[,5] = log(InData[,5])
