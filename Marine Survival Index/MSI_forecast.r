@@ -8,8 +8,8 @@
 #monitoring was cut at the WF Smith and Winchester sites. This code forecasts marine
 #marine survival fit to alternative Marine Survival Index values from MSI_interpolation.r.
 #
-#MSI alternatives (y-values) need to be changed in three places: line 81-85 in this
-#file, line 19 in Forecast_Skill_2Var.R, and line 27 in Conf_Intervals_2Var.R
+#MSI alternatives are changed at the start of the code and loops are used to hindcast
+#using the different alternatives for the last five years
 #
 
 require(stats); require(graphics)
@@ -27,8 +27,8 @@ jackFlag = FALSE #currently only use for OPIH
   fishfile = "OCNForecastData.csv"
   #fname = paste("../../Data/", fishfile, sep = "")
   OCNData <- read.csv(fishfile)
-  theYlabel = "Abundance (thousands)"
-  theTitle ="OCN Rivers 1970-2009"
+  theYlabel = "Marine Survival Index"
+  theTitle ="OCN Rivers"
   xPos = 1969 #1978
   yPos = 40 #55 #500  
 
