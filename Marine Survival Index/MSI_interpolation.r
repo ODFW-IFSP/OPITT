@@ -6,7 +6,7 @@
 #monitoring was cut at the WF Smith and Winchester sites. This code uses the
 #remaining LCM sites to interpolate the missing marine survival estimates.
 #
-#MARSS parameters forked from Washington Department of Fish & Wildlife, Fish Program
+#MARSS inspiration forked from Washington Department of Fish & Wildlife, Fish Program
 #https://github.com/wdfw-fp/OPI-H-Forecast-Evaluation-2023/tree/2024_forecast
 #
 
@@ -327,7 +327,7 @@ MSI_results <- MSI_ESU %>%
   MSI_results$MSAdjCurrent[1:19] <- MSI_results$MSAdjOG[1:19]
   MSI_results$MSAdjThree[1:19] <- MSI_results$MSAdjOG[1:19]
   MSI_results$MSAdjMARSSm5[1:19] <- MSI_results$MSAdjOG[1:19]
-#Use the current MSI up to 2019
+#Use the current MSI up to 2019, MSI alternatives are used after this
   MSI_results$MSAdjOG[20:21] <- MSI_results$MSAdjCurrent[20:21]
   colnames(MSI_results)[3] <- "MSAdjFixed"
   MSI_results$MSAdjThree[20:21] <- MSI_results$MSAdjCurrent[20:21]
