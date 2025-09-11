@@ -131,7 +131,7 @@ for (iStep in 1:nSteps) {
   endRow = endRow + 1   
   alpha = 0.1
   #Lower and upper quantiles of ensemble mean forecast from combining randomized forecast from all models
-  theQuantiles = quantile(allFCs, probs = c(alpha/2,(1-alpha/2)), na.rm = FALSE, names = TRUE, type = 6)  
+  theQuantiles = quantile(allFCs, probs = c(alpha/2,(1-alpha/2)), na.rm = TRUE, names = TRUE, type = 6)  
   ensembleAveFC[iStep,4] = theQuantiles[1]
   ensembleAveFC[iStep,5] = theQuantiles[2] 
 
