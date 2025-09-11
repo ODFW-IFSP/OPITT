@@ -270,6 +270,7 @@ gtsave(data = MSI_eval_table,
 #Print graph of MSIs used in Forecast Evaluations
 MSI_graph <- MSI_ESU
 MSI_graph$MSAdjThree[1:21] <- NA
+MSI_graph$MSAdjCurrent[1:18] <- NA
 MSI_graph_long <- MSI_graph %>%
   select(ReturnYear, MSAdjCurrent, MSAdjMARSSm5, MSAdjThree, MSAdjOG)
 MSI_graph_long <- pivot_longer(MSI_graph_long,
@@ -278,7 +279,7 @@ MSI_graph_long <- pivot_longer(MSI_graph_long,
                               values_to = "Value")
 MSI_graph_long$Metric <- factor(MSI_graph_long$Metric,
                                 levels = c("MSAdjOG", "MSAdjCurrent", "MSAdjThree", "MSAdjMARSSm5"),
-                                labels = c("Original MSI", "Current MSI", "Three site MSI", "MARSS model MSI"))
+                                labels = c("Original (six site) MSI", "Current (five site) MSI", "Three site MSI", "MARSS model MSI"))
 
 MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, color = Metric)) +
   geom_line(linewidth = 1.5) +
@@ -286,8 +287,8 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
   scale_color_manual(
     name = NULL,
     values = c(
-      "Original MSI" = "green",
-      "Current MSI" = "black",
+      "Original (six site) MSI" = "green",
+      "Current (five site) MSI" = "black",
       "Three site MSI" = "blue",
       "MARSS model MSI" = "orange"
     )
@@ -304,8 +305,6 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
         axis.title.y = element_text(size = 12)
   )
 print(MSI_alt_plot)       
-ggsave("MSI_plot.png", plot = MSI_alt_plot, width = 7, height = 5, units = "in", dpi = 300)
-
 ggsave("MSI_plot.png", plot = MSI_alt_plot +
          theme(plot.margin = margin(10, 30, 10, 10)) +
          coord_cartesian(clip = "off"),
@@ -324,10 +323,14 @@ cor(MSI_ESU$MSAdjCurrent[22:26], MSI_ESU$MSAdjMARSSm5[22:26])
 #Create the MSI inputs to be used in the marine survival forecast
 MSI_results <- MSI_ESU %>%
   select(ReturnYear, MSAdjCurrent, MSAdjOG, MSAdjMARSSm5, MSAdjThree)
+#Use the original MSI up to 2017
+  MSI_results$MSAdjCurrent[1:19] <- MSI_results$MSAdjOG[1:19]
+  MSI_results$MSAdjThree[1:19] <- MSI_results$MSAdjOG[1:19]
+  MSI_results$MSAdjMARSSm5[1:19] <- MSI_results$MSAdjOG[1:19]
 #Use the current MSI up to 2019
-  MSI_results$MSAdjOG[1:21] <- MSI_results$MSAdjCurrent[1:21]
+  MSI_results$MSAdjOG[20:21] <- MSI_results$MSAdjCurrent[20:21]
   colnames(MSI_results)[3] <- "MSAdjFixed"
-  MSI_results$MSAdjThree[1:21] <- MSI_results$MSAdjCurrent[1:21]
-  MSI_results$MSAdjMARSSm5[1:21] <- MSI_results$MSAdjCurrent[1:21]
+  MSI_results$MSAdjThree[20:21] <- MSI_results$MSAdjCurrent[20:21]
+  MSI_results$MSAdjMARSSm5[20:21] <- MSI_results$MSAdjCurrent[20:21]
 
 write_csv(MSI_results, "MSI_results.csv")  
