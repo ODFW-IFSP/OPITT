@@ -279,7 +279,7 @@ MSI_graph_long <- pivot_longer(MSI_graph_long,
                               values_to = "Value")
 MSI_graph_long$Metric <- factor(MSI_graph_long$Metric,
                                 levels = c("MSAdjOG", "MSAdjCurrent", "MSAdjThree", "MSAdjMARSSm5"),
-                                labels = c("Original (six site) MSI", "Current (five site) MSI", "Three site MSI", "MARSS model MSI"))
+                                labels = c("Six site MSI (2013)", "Five site MSI (2017)", "Three site MSI", "MARSS model MSI"))
 
 MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, color = Metric)) +
   geom_line(linewidth = 1.5) +
@@ -287,12 +287,16 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
   scale_color_manual(
     name = NULL,
     values = c(
-      "Original (six site) MSI" = "green",
-      "Current (five site) MSI" = "black",
+      "Six site MSI (2013)" = "green",
+      "Five site MSI (2017)" = "black",
       "Three site MSI" = "blue",
       "MARSS model MSI" = "orange"
     )
   ) +
+  scale_y_continuous(
+    breaks = c(.02, 0.045, 0.08),
+    labels = scales::label_percent(accuracy = 0.1)(c(.02, 0.045, 0.08))
+    ) +
   xlab("Return Year") +
   ylab("Adjusted Marine Survival") +
   #ggtitle("MSI Alternatives") +
