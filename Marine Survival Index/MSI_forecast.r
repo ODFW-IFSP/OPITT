@@ -35,7 +35,7 @@ jackFlag = FALSE #currently only use for OPIH
   
 #Create evaluation table
   MSI_alt_label <- c("CurrentMSI", "InterpolatedMSI", "ThreeSiteMSI", "FixedMSI")
-  Forecast_eval_columns <- c("Forcast_year", "MSI_type", "Ensemble_forecast", "R2", "OCV")
+  Forecast_eval_columns <- c("Forecast_year", "MSI_type", "Ensemble_forecast", "R2", "OCV")
   Forecast_eval <- data.frame(matrix(nrow = 0, ncol = length(Forecast_eval_columns)))
 
 #Convert ratios to logit
