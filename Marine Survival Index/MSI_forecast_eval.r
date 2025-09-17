@@ -114,9 +114,9 @@ Forecast_results_plot <- ggplot(data = MSI_forecast, aes(x = Forecast_year, y = 
     name = NULL,
     values = c(
       "Five site MSI (2017)" = "black",
-      "Three site MSI" = "blue",
-      "Interpolated MSI" = "orange",
-      "Fixed model" = "green"
+      "Three site MSI" = "#0072B2",
+      "Interpolated MSI" = "#D55E00",
+      "Fixed model" = "#009E73"
     )
   ) +
   scale_y_continuous(labels = scales::label_percent(accuracy = 0.1)) +

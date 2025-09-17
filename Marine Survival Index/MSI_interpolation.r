@@ -177,14 +177,14 @@ for (i in 3:8){
   print(ggplot(data=MSI_ESU, aes(x=ReturnYear, y=MSAdjCurrent)) +
     xlab("Return Year") +
     ggtitle(paste("OCV minus", i)) +
-    geom_line(color="black",linewidth=1.5) + 
-    geom_point(color="black", size = 2) +
-    geom_line(aes(y=!!MSline), col='orange', linewidth=1.5) +
-    geom_point(aes(y=!!MSline), col='orange', size = 2) +
-    geom_line(aes(y=MSAdjThree), col='blue', linewidth=1.5) +
-    geom_point(aes(y=MSAdjThree), col='blue', size = 2) +
-    geom_line(aes(y=MSAdjOG), col='green', linewidth=1.5) +
-    geom_point(aes(y=MSAdjOG), col='green', size = 2) +
+    geom_line(color="#009E73",linewidth=1.5) + 
+    geom_point(color="#009E73", size = 2) +
+    geom_line(aes(y=!!MSline), col='#D55E00', linewidth=1.5) +
+    geom_point(aes(y=!!MSline), col='#D55E00', size = 2) +
+    geom_line(aes(y=MSAdjThree), col='#0072B2', linewidth=1.5) +
+    geom_point(aes(y=MSAdjThree), col='#0072B2', size = 2) +
+    geom_line(aes(y=MSAdjOG), col='#000000', linewidth=1.5) +
+    geom_point(aes(y=MSAdjOG), col='#000000', size = 2) +
     theme_bw())
   
 }
@@ -287,10 +287,10 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
   scale_color_manual(
     name = NULL,
     values = c(
-      "Six site MSI (2013)" = "green",
-      "Five site MSI (2017)" = "black",
-      "Three site MSI" = "blue",
-      "MARSS model MSI" = "orange"
+      "Six site MSI (2013)" = "#000000",
+      "Five site MSI (2017)" = "#009E73",
+      "Three site MSI" = "#0072B2",
+      "MARSS model MSI" = "#D55E00"
     )
   ) +
   scale_y_continuous(
