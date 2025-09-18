@@ -11,23 +11,17 @@
 require(tidyverse)
 require(gt)
 require(scales)
+require(Metrics)
 
 #Coho Salmon marine survival forecast output from MSI_forecast.r
 MSI_forecast <- read_csv("Forecast_eval.csv")
-#OPIH Jacks/smolt from PMFC Preseason I, Table C-2
+#OPIH Jacks/smolt from PMFC Preseason I, Table V-8
 OPIH_jacks <- read_csv("OPIH_jacks.csv")
 
 #A13 matrix MS categories from PMFC Preseason I, Table A-3 & A-4
 MS_breaks <- c(0, 0.02, 0.045, 0.08, Inf)
 OPIH_breaks <- c(0, 0.0008, 0.0014, 0.0040, Inf)
 Break_labels <- c("ExLow", "Low", "Medium", "High")
-
-#MSI_table <- MSI_forecast%>%
-#  pivot_wider(names_from = MSI_type, values_from = Ensemble_forecast, id_cols=Forecast_year)
-#MSI_table$CurrentMSI_cat <- cut(MSI_table$CurrentMSI,
-#                                breaks = MS_breaks,
-#                                labels = Break_labels,
-#                                right = TRUE)
 
 #Categorize the forecast survival
 MSI_forecast$MSI_category <- cut(MSI_forecast$Ensemble_forecast,
@@ -45,13 +39,12 @@ OPIH_jacks <- OPIH_jacks %>%
   rename_at("OPIH_Jacks_Smolt", ~"Ensemble_forecast") %>%
   rename_at("ReturnYear", ~"Forecast_year")
 OPIH_jacks <- OPIH_jacks %>%
-  dplyr::select(-c("Jacks_Total_OPIH", "Smolts_Normal", "Delayed", "Smolts_Total")) %>%
   filter(between(Forecast_year, 2021, 2025))
 MSI_table <- bind_rows(MSI_forecast, OPIH_jacks)
 
 # Create a summary column for the table
 MSI_table <- MSI_table %>%
-  mutate(Forecast_Info = paste0("**", MSI_category, "**<br>", round(Ensemble_forecast * 100, 1), "%"))
+  mutate(Forecast_Info = paste0("**", MSI_category, "**<br>", round(Ensemble_forecast * 100, 2), "%"))
 
 # Pivot the data
 MSI_table_pivot <- MSI_table %>%
@@ -138,4 +131,13 @@ ggsave("Forecast_results_plot.png", plot = Forecast_results_plot +
          coord_cartesian(clip = "off"),
        width = 7, height = 4, units = "in", dpi = 300)
 
+#MAE and MAPE evaluations
+Forecast_MAPE_columns <- c("MARSS_MAPE", "Three_site_MAPE", "Fixed_MAPE")
+Forecast_MAPE <- data.frame(matrix(nrow = 0, ncol = length(Forecast_MAPE_columns)))
+Forecast_MAPE <- rbind(c(mape(MSI_forecast$Ensemble_forecast[1:5], MSI_forecast$Ensemble_forecast[6:10]), 
+                   mape(MSI_forecast$Ensemble_forecast[1:5], MSI_forecast$Ensemble_forecast[11:15]), 
+                   mape(MSI_forecast$Ensemble_forecast[1:5], MSI_forecast$Ensemble_forecast[16:20])))
+colnames(Forecast_MAPE) <- Forecast_MAPE_columns
+print(Forecast_MAPE)
 
+cor(MSI_table$Ensemble_forecast[1:5], MSI_table$Ensemble_forecast[21:25])
