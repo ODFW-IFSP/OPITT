@@ -278,7 +278,7 @@ MSI_graph_long <- pivot_longer(MSI_graph_long,
                               values_to = "Value")
 MSI_graph_long$Metric <- factor(MSI_graph_long$Metric,
                                 levels = c("MSAdjOG", "MSAdjCurrent", "MSAdjThree", "MSAdjMARSSm5"),
-                                labels = c("Six site MSI (2013)", "Five site MSI (2017)", "Three site MSI", "MARSS model MSI"))
+                                labels = c("Six site MSI (2013)", "Five site MSI (2017)", "Three site MSI", "Interpolated MSI"))
 
 MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, color = Metric)) +
   geom_line(linewidth = 1.5) +
@@ -289,7 +289,7 @@ MSI_alt_plot <- ggplot(data = MSI_graph_long, aes(x = ReturnYear, y = Value, col
       "Six site MSI (2013)" = "#000000",
       "Five site MSI (2017)" = "#009E73",
       "Three site MSI" = "#0072B2",
-      "MARSS model MSI" = "#D55E00"
+      "Interpolated MSI" = "#D55E00"
     )
   ) +
   scale_y_continuous(
