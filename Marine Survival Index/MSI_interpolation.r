@@ -11,12 +11,11 @@
 #
 
 # Load libraries
-require(tidyverse)
-require(MARSS)
-require(Metrics)
-require(gt)
-require(ggcorrplot)
-#require(corrplot)
+library(tidyverse)
+library(MARSS)
+library(Metrics)
+library(gt)
+library(ggcorrplot)
 
 #Coho Salmon marine survival estimate data from the ODFW LCM project
 MSI_data<-read_csv("MSI.csv")

@@ -12,9 +12,9 @@
 #using the different alternatives for the last five years
 #
 
-require(stats); require(graphics)
+library(stats); library(graphics)
 library(mgcv)
-require(tidyverse)
+library(tidyverse)
 
 #Number of Years over which to calculate running mean
 nKnots = 3
