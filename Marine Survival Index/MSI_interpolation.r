@@ -148,7 +148,7 @@ for (i in 3:8){
     t()
   
   model=list(Q= "equalvarcov")
-  fit=MARSS(marss_mat, model=model)
+  fit=MARSS(marss_mat, model=model, control=list(maxit=1000))
   
   fitted<-t(fit$states)
   colnames(fitted)<-gsub("X.","mle_",colnames(fitted))
