@@ -1,5 +1,4 @@
 ReturnYear,Site,Species,FemaleSpawners,FemaleSmolts,MarineSurvival,ImpactRate,MSAdj
-1999,Cascade,Coho,5,703,0.71%,0.073,0.007667012
 1999,NF Nehalem Total,Coho,369,21627,1.71%,0.073,0.01840519
 1999,SiletzMill,Coho,83,4760,1.74%,0.073,0.018808137
 1999,West Fork Smith,Coho,130,11028,1.18%,0.073,0.012715902
@@ -48,7 +47,6 @@ ReturnYear,Site,Species,FemaleSpawners,FemaleSmolts,MarineSurvival,ImpactRate,MS
 2007,NF Nehalem Total,Coho,534,13426,3.98%,0.118,0.045094755
 2007,SiletzMill,Coho,112,6550,1.71%,0.118,0.01938689
 2007,West Fork Smith,Coho,137,11875,1.15%,0.118,0.013079769
-2007,Winchester Creek,Coho,6,4471,0.13%,0.118,0.001521351
 2007,YaquinaMill,Coho,135,5105,2.64%,0.118,0.02998261
 2008,Cascade,Coho,160,3696,4.33%,0.019,0.044122516
 2008,NF Nehalem Total,Coho,903,11149,8.10%,0.019,0.082558796
@@ -131,7 +129,6 @@ ReturnYear,Site,Species,FemaleSpawners,FemaleSmolts,MarineSurvival,ImpactRate,MS
 2022,Cascade,Coho,233,2905,8.02%,0.1508,0.09444953
 2022,SiletzMill,Coho,609,7247,8.40%,0.1508,0.098950749
 2022,West Fork Smith,Coho,451,12105,3.73%,0.1508,0.043871636
-2022,Winchester Creek,Coho,5,1090,0.46%,0.1508,0.005401738
 2022,YaquinaMill,Coho,262,2867,9.14%,0.1508,0.107593957
 2023,Cascade,Coho,244,4175,5.84%,0.1895,0.072107482
 2023,SiletzMill,Coho,583,8003,7.28%,0.1895,0.089879929
