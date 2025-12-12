@@ -13,9 +13,6 @@
 # Load libraries
 library(tidyverse)
 library(MARSS)
-#library(Metrics)
-#library(gt)
-#library(ggcorrplot)
 
 #Coho Salmon marine survival estimate data from the ODFW LCM project
 MSI_data<-read_csv("MSI.csv")
@@ -67,8 +64,9 @@ MSI_Three_Weight <- MSI_table%>%
   mutate(Cascade=Cascade*(2.5/6))%>%
   mutate(SiletzMill=SiletzMill*(2.5/6))%>%
   mutate(YaquinaMill=YaquinaMill*(1/6))
-#SiletzMill needs more weight in 1998 as Cascade is NA
+#SiletzMill needs more weight in 1999 and 2001 as Cascade is NA
 MSI_Three_Weight$SiletzMill[3] <- MSI_Three_Weight$SiletzMill[3]*2
+MSI_Three_Weight$SiletzMill[1] <- MSI_Three_Weight$SiletzMill[1]*2
 
 MSI_Three_Weight <- MSI_Three_Weight%>%
   mutate(MSAdjThree = rowSums(MSI_Three_Weight[ , c(2,3,4)], na.rm=TRUE))
