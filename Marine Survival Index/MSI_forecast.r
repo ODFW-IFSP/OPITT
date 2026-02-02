@@ -32,33 +32,15 @@ jackFlag = FALSE #currently only use for OPIH
   theTitle = "OCN Rivers"
   xPos = 1969 #1978
   yPos = 40 #55 #500
-  
-#Create evaluation table
-  MSI_alt_label <- c("CurrentMSI", "InterpolatedMSI", "ThreeSiteMSI", "FixedMSI")
-  Forecast_eval_columns <- c("Forecast_year", "MSI_type", "Ensemble_forecast", "R2", "OCV")
-  Forecast_eval <- data.frame(matrix(nrow = 0, ncol = length(Forecast_eval_columns)))
 
 #Convert ratios to logit
   OCNData[,2] = log(OCNData[,2]/(1-OCNData[,2]))
   OCNData[,3] = log(OCNData[,3]/(1-OCNData[,3]))
-  OCNData[,15] = log(OCNData[,15]/(1-OCNData[,15]))
-  OCNData[,16] = log(OCNData[,16]/(1-OCNData[,16]))
-  OCNData[,17] = log(OCNData[,17]/(1-OCNData[,17]))
-  OCNData[,18] = log(OCNData[,18]/(1-OCNData[,18]))
 #Covert abundances to log
   OCNData[,4] = log(OCNData[,4])
   OCNData[,5] = log(OCNData[,5])
 
-for (k in 1:4)  { #loop through the MSI alternatives
-  OCNData$SURVIVAL <- OCNData[,k+14]
-    
-  for (l in 2021:2025)  { #loop through the years
-    InData <- OCNData %>%
-      filter(between(YEAR, 1970, l))
-  
-
-
-    
+InData <- OCNData
 Nyrs = length(InData[,4])
 earliestYear = InData[1,1]
 latestYear = InData[Nyrs,1]
@@ -243,9 +225,9 @@ fullStats = theStats
 theStats = cbind(fullStats[,1:3],(exp(fullStats[,9])/(exp(fullStats[,9])+1)),fullStats[,6],fullStats[,7])
 colnames(theStats) = c("Var1", "Var2", "Var3", "Forecast", "R2", "OCV")
 
-forecastsFilename <- here::here(paste0("results/ForecastStatsByModel", forecastYr, MSI_alt_label[k], ".csv"))
+forecastsFilename <- here::here(paste0("results/ForecastStatsByModel", forecastYr, ".csv"))
 cat("Forecast year:",forecastYr, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = FALSE)
-cat("Fish data file:",MSI_alt_label[k], "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
+cat("Fish data file:",fishfile, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
 cat("Predictor data file:",fishfile, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
 write.table(theStats, file= forecastsFilename, row.names = FALSE, sep=",", append = TRUE)
 cat("Ensemble Mean"," ", " ", meanFC, R2_cal, OCV_cal, "\n", file = forecastsFilename, sep = ",", fill = FALSE, labels = NULL, append = TRUE)
@@ -257,10 +239,3 @@ cat("Upper 90% P.I.", " ", " ", exp(ensembleAveFC[nSteps,5]), "\n", file = forec
 
 colnames(AllPredictors2) = var.names2
 dev.off()
-
-Forecast_eval <- rbind(Forecast_eval, c(forecastYr, MSI_alt_label[k], meanFC, R2_cal, OCV_cal))
-  }
-}
-
-colnames(Forecast_eval) <- Forecast_eval_columns
-write_csv(Forecast_eval, "Forecast_eval.csv")  
